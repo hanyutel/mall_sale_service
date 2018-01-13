@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+
+	<context:component-scan base-package="cn.hanyuweb.service"
+		use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Service" />
+	</context:component-scan>
+	<context:property-placeholder location="classpath:db.properties,classpath:activemq.properties" />
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="username" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+		<property name="driverClassName" value="${jdbc.driverClassName}"></property>
+		<property name="url" value="${jdbc.url}"></property>
+	</bean>
+
+	<bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+	</bean>
+	<bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="cn.hanyuweb.mapper"></property>
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryBean"></property>
+	</bean>
+	
+	
+	<bean id="activeMQConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+		<property name="brokerURL" value="${brokerURL}"></property>
+	</bean>
+	<bean id="connectionFactory" class="org.springframework.jms.connection.SingleConnectionFactory">
+		<property name="targetConnectionFactory" ref="activeMQConnectionFactory"></property>
+	</bean>
+<!-- 	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate"> -->
+<!-- 		<property name="connectionFactory" ref="connectionFactory"></property> -->
+<!-- 	</bean> -->
+	
+	<bean id="userDestination" class="org.apache.activemq.command.ActiveMQQueue">
+		<constructor-arg value="user_queue"></constructor-arg>
+	</bean>
+	<bean id="payOrderSuccessTopicDestination" class="org.apache.activemq.command.ActiveMQTopic">
+		<constructor-arg value="pay_order_success_topic"></constructor-arg>
+	</bean>
+		<!-- jms的topic模板 -->
+<!-- 	<bean id="jmsTopicTemplate" class="org.springframework.jms.core.JmsTemplate"> -->
+<!-- 		<property name="connectionFactory" ref="connectionFactory"></property> -->
+<!-- 		<property name="defaultDestination" ref="payOrderSuccessTopicDestination"></property> -->
+<!-- 		  配置是否为发布订阅者模式，默认为false   -->
+<!-- 		<property name="pubSubDomain" value="true"></property> -->
+<!-- 	</bean> -->
+	<bean id="userMessageListener" class="cn.hanyuweb.Listener.UserMessageListener" />
+	<bean id="orderMessageListener" class="cn.hanyuweb.Listener.OrderMessageListener"></bean>
+	<bean id="sendMessageListener" class="cn.hanyuweb.Listener.SendMessageListener"></bean>
+	<bean class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="destination" ref="userDestination"></property>
+		<property name="messageListener" ref="userMessageListener"></property>
+		<property name="connectionFactory" ref="connectionFactory"></property>
+	</bean>
+	
+	<bean class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="connectionFactory" ref="connectionFactory"></property>
+		<property name="destination" ref="payOrderSuccessTopicDestination"></property>
+		<property name="messageListener" ref="orderMessageListener"></property>
+		<property name="pubSubDomain" value="true" />  
+	</bean>
+		<bean class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="connectionFactory" ref="connectionFactory"></property>
+		<property name="destination" ref="payOrderSuccessTopicDestination"></property>
+		<property name="messageListener" ref="sendMessageListener"></property>
+		<property name="pubSubDomain" value="true" />  
+	</bean>
+	
+</beans>

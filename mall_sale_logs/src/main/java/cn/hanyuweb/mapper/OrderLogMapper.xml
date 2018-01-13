@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.hanyuweb.mapper.OrderLogMapper">
+	<insert id="insert_order_log">
+		insert into t_mall_order_log(
+dd_id,
+zhfpt_id,
+zhfje,
+zhfzhh,
+shkzhh
+	) values(#{dd_id
+},#{zhfpt_id
+},#{zhfje
+},#{zhfzhh
+},#{shkzhh})
+	</insert>
+</mapper>
