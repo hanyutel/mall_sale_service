@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.hanyuweb.mapper.AttrMapper" >
+<insert id="insert_attr_map" keyColumn="id" useGeneratedKeys="true" keyProperty="attr.id">
+		insert into T_MALL_ATTR(
+		shxm_mch,
+		flbh2
+		) values
+		(#{attr.shxm_mch},#{class_2_id})
+		
+	</insert>
+	<insert id="insert_attr_param" keyColumn="id" useGeneratedKeys="true" keyProperty="attr.id">
+		insert into T_MALL_ATTR(
+		shxm_mch,
+		flbh2
+		) values
+		(#{attr.shxm_mch},#{class_2_id})
+		
+	</insert>
+	
+	<select id="select_attr_list_by_class_2_id" resultMap="select_attr_list_by_class_2_id_map">
+		select val.id value_id,attr.id attr_id,val.*,attr.* from T_MALL_VALUE val,T_MALL_ATTR attr where val.shxm_id=attr.id and flbh2 =#{class_2_id}
+	</select>
+	
+	<resultMap type="cn.hanyuweb.bean.OBJECT_T_MALL_ATTR" id="select_attr_list_by_class_2_id_map" autoMapping="true">
+		<result column="attr_id" property="id"/>
+		<collection property="attr_value" ofType="cn.hanyuweb.bean.T_MALL_VALUE" autoMapping="true">
+			<result column="value_id" property="id"/>
+		</collection>
+	</resultMap>
+	
+	<insert id="insert_attr" keyColumn="id" useGeneratedKeys="true" keyProperty="id">
+		insert into T_MALL_ATTR(
+		shxm_mch,
+		flbh2
+		) values
+		(#{shxm_mch},#{flbh2})
+		
+	</insert>
+	<insert id="insert_value" >
+		insert into T_MALL_VALUE(
+			shxzh,
+			shxm_id,
+			shxzh_mch
+		) values 
+		<foreach collection="attr_value" item="val" separator=",">
+			(#{val.shxzh},#{shxm_id},#{val.shxzh_mch})
+		</foreach>
+	</insert>
+</mapper>

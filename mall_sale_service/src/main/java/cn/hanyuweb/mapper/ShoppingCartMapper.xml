@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.hanyuweb.mapper.ShoppingCartMapper">
+	<select id="select_cart_list_by_user_id" resultType="cn.hanyuweb.bean.T_MALL_SHOPPINGCAR">
+		select *
+		from T_MALL_SHOPPINGCAR where yh_id =#{id};
+	</select>
+	<insert id="insert_cart_list">
+		insert into T_MALL_SHOPPINGCAR(
+		sku_mch,
+		sku_jg,
+		tjshl,
+		hj,
+		yh_id,
+		shp_id,
+		sku_id,
+		shp_tp,
+		shfxz,
+		kcdz
+		) values
+		<foreach collection="list" item="cart" separator=",">
+			(#{cart.sku_mch},
+			#{cart.sku_jg},
+			#{cart.tjshl},
+			#{cart.hj},
+			#{cart.yh_id},
+			#{cart.shp_id},
+			#{cart.sku_id},
+			#{cart.shp_tp},
+			#{cart.shfxz},
+			#{cart.kcdz})
+		</foreach>
+	</insert>
+	<insert id="insert_cart">
+		insert into T_MALL_SHOPPINGCAR(
+		sku_mch,
+		sku_jg,
+		tjshl,
+		hj,
+		yh_id,
+		shp_id,
+		sku_id,
+		shp_tp,
+		shfxz,
+		kcdz
+		) 
+		values(#{sku_mch},#{sku_jg},#{tjshl},#{hj},#{yh_id},#{shp_id},#{sku_id},#{shp_tp},#{shfxz},#{kcdz})
+	</insert>
+	<update id="update_cart">
+		update T_MALL_SHOPPINGCAR 
+		<set>
+			<if test="tjshl!=0 and hj!=0">
+				tjshl=#{tjshl},hj=#{hj},
+			</if>
+			<if test="shfxz!=null and shfxz!=''">
+				shfxz = #{shfxz},
+			</if>
+		</set>
+		where sku_id=#{sku_id} and yh_id=#{yh_id}
+	</update>
+</mapper>

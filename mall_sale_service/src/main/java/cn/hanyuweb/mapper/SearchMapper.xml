@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.hanyuweb.mapper.SearchMapper">
+	<select id="select_sku_list_by_class_2_id" resultMap="select_sku_list_by_class_2_id_map">
+		select sku.id as sku_id,spu.id as spu_id,tm.id as tm_id,sku.*,spu.*,tm.* from 
+		t_mall_sku sku,t_mall_product spu,t_mall_trade_mark tm
+		where sku.shp_id =spu.id and tm.id=spu.pp_id
+		and spu.flbh2 =#{flbh2}
+	</select>
+	<resultMap type="cn.hanyuweb.bean.OBJECT_T_MALL_SKU" id="select_sku_list_by_class_2_id_map" autoMapping="true">
+		<result column="sku_id" property="id"/>
+		<association javaType="cn.hanyuweb.bean.T_MALL_PRODUCT" property="spu" autoMapping="true">
+			<result column="spu_id" property="id"/>
+		</association>
+		<association javaType="cn.hanyuweb.bean.T_MALL_TRADE_MARK" property="tm" autoMapping="true">
+			<result column="tm_id" property="id"/>
+		</association>
+	</resultMap>
+	
+	
+	<select id="select_sku_list_by_class_2_id_and_attr" resultMap="select_sku_list_by_class_2_id_map">
+		select sku.id as sku_id,spu.id as spu_id,tm.id as tm_id,sku.*,spu.*,tm.* from 
+		t_mall_sku sku,t_mall_product spu,t_mall_trade_mark tm
+		where sku.shp_id =spu.id and tm.id=spu.pp_id
+		and spu.flbh2 =#{class_2_id}
+		and  sku.id in(
+			<if test="av_ids_list.size()>1">
+				select sku0.sku_id from 
+				<foreach collection="av_ids_list" item="av" index="i" separator=",">
+					(select sku_id,id from t_mall_sku_attr_value where shxm_id =#{av.shxm_id}  and shxzh_id = #{av.shxzh_id}) sku${i}
+				</foreach>
+					where
+				<foreach collection="av_ids_list" item="av" index="i" separator="and">
+					<if test="i>0">
+						sku${(i-1)}.sku_id=sku${i}.sku_id 
+					</if>
+				</foreach>
+			</if>
+			<if test="av_ids_list.size()==1">
+				select sku_id from t_mall_sku_attr_value where shxm_id =#{av_ids_list[0].shxm_id}  and shxzh_id = #{av_ids_list[0].shxzh_id}
+			</if>
+		)
+		
+	</select>
+	
+	<select id="select_sku_list_by_spu_id" resultType="cn.hanyuweb.bean.T_MALL_SKU">
+		select * from T_MALL_SKU where shp_id=#{shp_id}
+	</select>
+	<select id="select_sku_detail" resultMap="select_sku_detail_map">
+				select sku.id sku_id,sku.*,spu.id spu_id,spu.*,image.id image_id,image.*,concat(shxzh,shxzh_mch) shxzh_mch,shxm_mch
+		from t_mall_sku sku,t_mall_product spu,t_mall_product_image image,t_mall_attr attr,t_mall_value val,T_MALL_SKU_ATTR_VALUE av
+		where sku.shp_id=spu.id and spu.id=image.shp_id and sku.id=av.sku_id and av.shxm_id=attr.id and av.shxzh_id = val.id 
+		and sku.id=#{sku_id}
+	</select>
+	<resultMap type="cn.hanyuweb.bean.OBJECT_T_MALL_SKU_DETAIL" id="select_sku_detail_map" autoMapping="true">
+		<result column="sku_id" property="id"/>
+		<association javaType="cn.hanyuweb.bean.T_MALL_PRODUCT" property="spu" autoMapping="true">
+			<result column="spu_id" property="id"/>
+		</association>
+		<collection ofType="cn.hanyuweb.bean.T_MALL_PRODUCT_IMAGE" property="list_image" autoMapping="true">
+			<result column="image_id" property="id"/>
+		</collection>
+		<collection ofType="cn.hanyuweb.bean.OBJECT_T_MALL_AV_NAME" property="av_name" autoMapping="true"> 
+		</collection>
+	</resultMap>
+		
+</mapper>

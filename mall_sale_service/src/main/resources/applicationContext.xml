@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+				http://code.alibabatech.com/schema/dubbo 
+	http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+		">
+	<context:component-scan base-package="cn.hanyuweb.service"
+		use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Service" />
+	</context:component-scan>
+
+	<context:property-placeholder
+		location="classpath:db.properties,classpath:webServicePath.properties" />
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="username" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+		<property name="driverClassName" value="${jdbc.driverClassName}"></property>
+		<property name="url" value="${jdbc.url}"></property>
+	</bean>
+	<bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<!-- <property name="mapperLocations" value="cn.hanyuweb.mapper"></property> -->
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+	</bean>
+	<bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="cn.hanyuweb.mapper"></property>
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryBean"></property>
+	</bean>
+	
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<!-- 通过属性注入的方式注入数据源 -->
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	<tx:advice transaction-manager="transactionManager" id="tx-advice">
+		<tx:attributes>
+			<tx:method name="*" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:pointcut expression="execution(* cn.hanyuweb.service.*.*(..))"
+			id="point" />
+		<aop:advisor advice-ref="tx-advice" pointcut-ref="point" />
+	</aop:config>
+	
+	<!-- 使用dubbo发布服务 -->
+	<!-- 提供方应用信息，用于计算依赖关系 -->
+	<dubbo:application name="sale_service" />
+	<dubbo:registry protocol="zookeeper" address="192.168.148.128:2181" />
+	<!-- 用dubbo协议在20880端口暴露服务 -->
+	<dubbo:protocol name="dubbo" port="8080" />
+	<!-- 声明需要暴露的服务接口 -->
+	<dubbo:service id="attrServiceInf" interface="cn.hanyuweb.service.AttrServiceInf" ref="attrServiceImpl"  timeout="600000"/>
+	<dubbo:service id="orderServiceInf" interface="cn.hanyuweb.service.OrderServiceInf" ref="orderServiceImp" timeout="600000"/>
+	<dubbo:service id="searchServiceInf" interface="cn.hanyuweb.service.SearchServiceInf" ref="searchServiceImp" timeout="600000"/>
+	<dubbo:service id="shoppingCartServiceInf" interface="cn.hanyuweb.service.ShoppingCartServiceInf" ref="shoppingCartServiceImp" timeout="600000"/>
+
+</beans>
