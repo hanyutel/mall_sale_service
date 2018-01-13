@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://code.alibabatech.com/schema/dubbo 
+	http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+		">
+		
+		<context:property-placeholder location="classpath:webServicePath.properties,classpath:activemq.properties"/>
+	<context:component-scan base-package="cn.hanyuweb.controller"
+		use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+
+	<bean id="viewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/"></property>
+		<property name="suffix" value=".jsp"></property>
+	</bean>
+
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="defaultEncoding" value="UTF-8"></property>
+		<property name="maxUploadSize" value="10240000"></property>
+	</bean>
+
+
+	<!-- webservice调用 -->
+	<bean id="userServerInf" class="cn.hanyuweb.util.MyWsFactoryBean">
+		<property name="url" value="${soap_user}"></property>
+		<property name="t" value="cn.hanyuweb.server.UserServerInf"></property>
+	</bean>
+	<bean id="addressServerInf" class="cn.hanyuweb.util.MyWsFactoryBean">
+		<property name="url" value="${soap_address}"></property>
+		<property name="t" value="cn.hanyuweb.server.AddressServerInf"></property>
+	</bean>
+
+	<dubbo:application name="sale_client" />
+	<dubbo:registry protocol="zookeeper" address="192.168.148.128:2181" />
+	
+	<dubbo:reference interface="cn.hanyuweb.service.AttrServiceInf" id="attrServiceInf">
+	</dubbo:reference>
+	<dubbo:reference interface="cn.hanyuweb.service.OrderServiceInf" id="orderServiceInf">
+	</dubbo:reference>
+	<dubbo:reference interface="cn.hanyuweb.service.SearchServiceInf" id="searchServiceInf">
+	</dubbo:reference>
+	<dubbo:reference interface="cn.hanyuweb.service.ShoppingCartServiceInf" id="shoppingCartServiceInf">
+	</dubbo:reference>
+
+<!-- 消息工厂 -->
+	<bean id="activeMQConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+		<property name="brokerURL" value="${brokerURL}"></property>
+	</bean>
+	<bean id="connectionFactory" class="org.springframework.jms.connection.SingleConnectionFactory">
+		<property name="targetConnectionFactory" ref="activeMQConnectionFactory"></property>
+	</bean>
+	<!-- mq的消息模板 -->
+	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory" ref="connectionFactory"></property>
+	</bean>
+	
+	<bean id="userDestination" class="org.apache.activemq.command.ActiveMQQueue">
+		<constructor-arg value="user_queue"></constructor-arg>
+	</bean>
+	<bean id="payOrderSuccessTopicDestination" class="org.apache.activemq.command.ActiveMQTopic">
+		<constructor-arg value="pay_order_success_topic"></constructor-arg>
+	</bean>
+	<!-- jms的topic模板 -->
+	<bean id="jmsTopicTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory" ref="connectionFactory"></property>
+		<property name="defaultDestination" ref="payOrderSuccessTopicDestination"></property>
+		  <!-- 配置是否为发布订阅者模式，默认为false -->  
+		<property name="pubSubDomain" value="true"></property>
+	</bean>
+	
+	<mvc:default-servlet-handler />
+	<mvc:annotation-driven />
+</beans>
